@@ -1,0 +1,272 @@
+App: https://automationintesting.online/
+Scope: UI Booking flow (User app)
+
+====================================================
+TC-001: Room can be booked with valid data (Positive)
+====================================================
+Objective:
+Verify that a user can successfully book a room using valid dates and valid personal data.
+
+Preconditions:
+- The user application is available without logging in.
+- There is at least one room to book.
+- We are selecting a room with a price of £150
+- The selected date range has not yet been booked.
+- the selected date range is 4 days from 26 to 28 December 2025
+
+Test Data (Valid):
+- Select a range for 3 booking days  
+- First name: Vol
+- Last name: Zem
+- Email: Vol.Zem@example.com
+- Phone: +1234567890
+- Check the amount of the price payment in 3 days
+
+Steps:
+1. Open https://automationintesting.online/
+2. Scroll to the Rooms section.
+3. Select a room to book (open booking form for the chosen room).
+4. Open the date picker (calendar).
+5. Select valid Check-in and Check-out dates (future dates, not booked).
+6. Fill in booking form:
+   - First name
+   - Last name
+   - Email
+   - Phone
+7. Click the "Book" / "Book now" (Submit) button.
+8. Observe the UI response.
+
+Expected Result:
+- Booking request is submitted successfully.
+- A success confirmation is displayed (toast/message/confirmation text).
+- No validation errors are shown.
+- The selected dates are no longer available for booking for this room (can be verified in TC-UI-003).
+
+Postconditions:
+- Booking exists for the selected room and dates.
+
+====================================================
+TC-002: The room cannot be booked if one field is filled in (Negative)
+====================================================
+Objective:
+Verify that booking cannot be created when invalid/empty data is provided.
+
+Preconditions:
+- User application is available without logging in.
+- There is at least one room available for booking.
+- The selected date element is available.
+
+Test Data (Invalid variants):
+- First name: Vol
+- Last name: empty
+- Email: empty
+- Phone: empty
+
+====================================================
+TC-003: The room cannot be booked if two fields are filled in (Negative)
+====================================================
+Objective:
+Verify that booking cannot be created when invalid/empty data is provided.
+
+Preconditions:
+- User application is available without logging in.
+- There is at least one room available for booking.
+- The selected date element is available.
+
+- First name: Vol
+- Last name: Zem
+- Email: empty
+- Phone: empty
+====================================================
+TC-004: The room cannot be booked if three fields are filled in (Negative)
+====================================================
+Objective:
+Verify that booking cannot be created when invalid/empty data is provided.
+
+Preconditions:
+- User application is available without logging in.
+- There is at least one room available for booking.
+- The selected date element is available.
+
+- First name: Vol
+- Last name: Zem
+- Email: vol.zem@gmail.com
+- Phone: empty
+
+====================================================
+TC-005: The room cannot be booked if the phone number is entered incorrectly (Negative)
+====================================================
+Objective:
+Verify that booking cannot be created when invalid/empty data is provided.
+
+Preconditions:
+- User application is available without logging in.
+- There is at least one room available for booking.
+- The selected date element is available.
+
+- First name: Vol
+- Last name: Zem
+- Email: vol.zem@gmail.com
+- Phone: +12345
+
+Steps (common):
+1. Open https://automationintesting.online/
+2. Scroll to the Rooms section.
+3. Select a room to book (open booking form).
+4. Select valid Check-in and Check-out dates.
+5. Fill the form using one invalid variant (TC-002 to TC-005).
+6. Click the "Book" / "Book now" (Submit) button.
+7. Observe the UI response.
+
+Expected Result:
+- Booking is NOT created.
+- Form validation errors are shown for the invalid fields:
+  - For Variant TC-002: checks how many errors there are.
+  - For Variant TC-003: checks how many errors occurred when filling in only 2 fields.
+  - For Variant TC-004: checks how many errors occurred when filling in only 3 fields.
+  - For Variant TC-005: phone format validation error (if implemented).
+ 
+- No success confirmation is shown.
+
+Postconditions:
+- No new booking exists for the selected room and dates.
+
+====================================================
+TC-API-001 — Create a Room via Admin API and verify on User API
+====================================================
+Objective:
+Verify that a room created via Admin API appears in the User application API.
+
+Preconditions:
+- Admin credentials are valid: admin / password.
+- API endpoints are доступні.
+- Test data for a new room is prepared (unique room name/number).
+
+Test Data (example):
+- Room name: 105
+- Type/description: "Aenean porttitor mauris   fames ac ante."
+- Price: 300
+- Accessible: true
+- features: ["TV", "WiFi", "Safe"]
+type: "Single"
+
+Steps:
+1. Authenticate as Admin (if API requires auth token/cookie).
+2. Send POST request to Admin endpoint to create a room with test data.
+3. Verify response:
+   - HTTP 200/201
+   - Response body contains created room ID and correct fields.
+
+Expected Result:
+- Room is created successfully via Admin API.
+
+Postconditions:
+- Room exists (to be used in next tests or deleted in TC-API-004).
+
+====================================================
+TC-API-002 — Book the room via User API and verify booking on Admin API
+====================================================
+Objective:
+Verify that booking created via User API is visible via Admin API.
+
+Preconditions:
+- A room exists and is available for selected dates (created in TC-API-001).
+- Known room ID.
+- Chosen date range is free (future dates).
+
+Test Data (example):
+- Room ID: <created_room_id>
+- Check-in: YYYY-MM-DD (future)
+- Check-out: YYYY-MM-DD (check-in + 1..3 days)
+- First name: Vol
+- Last name: Zem
+- Email: Vol.Zem@example.com",
+- Phone: +1234567890
+
+Steps:
+1. Send GET to User API rooms endpoint to confirm the room exists and capture room ID.
+2. Send POST request to User API booking endpoint with booking payload (roomId + dates + guest data).
+3. Verify response:
+   - HTTP 200/201
+   - Booking ID returned (or confirmation payload).
+4. Send GET request to Admin API bookings endpoint (or room bookings endpoint).
+5. Verify that the booking exists:
+   - matches room ID
+   - matches dates
+
+
+Expected Result:
+- Booking is created successfully via User API.
+- Booking is visible in Admin API with correct room and dates.
+
+====================================================
+TC-API-003 — Edit Room via Admin API and verify changes via User API
+====================================================
+Objective:
+Verify that room updates made via Admin API are reflected in the User API.
+
+Preconditions:
+room data: {
+      roomName,
+      type: "Single",
+      accessible: true,
+      image: "/images/room1.jpg",
+      description: "Room before edit",
+      features: ["TV", "WiFi"],
+      roomPrice: 100,
+    },
+- Known room ID.
+
+Test Data (example updates):
+- New room name: "Room AFTER edit"
+- New price: 450
+- Accessible: false (or toggle any field)
+- Any other supported fields for update
+
+Steps:
+1. Send PATCH/PUT request to Admin API room update endpoint for the given room ID with updated fields.
+2. Verify response:
+   - HTTP 200
+   - Response body reflects updated fields.
+3. Send GET request to User API rooms endpoint (or GET room by ID, if available).
+4. Find the updated room by ID.
+5. Compare fields with expected updated values.
+
+Expected Result:
+Verify that room details (type, accessibility, description, price)
+ are successfully updated via Admin API and the changes are visible on User API.
+
+Postconditions:
+- Room exists in updated state.
+
+====================================================
+TC-API-004 — Delete Room via Admin API and verify it is removed from User API
+====================================================
+Objective:
+Verify that room deleted via Admin API is no longer available via User API.
+
+Preconditions:
+- Room data: {
+      roomName,
+      type: "Single",
+      accessible: true,
+      image: "/images/room1.jpg",
+      description: "Room for delete test",
+      features: ["TV", "WiFi"],
+      roomPrice: 100,
+    },
+- Known room ID.
+- (Optional) Ensure no active bookings exist for this room, or handle expected API behavior if bookings exist.
+
+Steps:
+1. Send DELETE request to Admin API room delete endpoint for the given room ID.
+2. Verify response:
+   - HTTP 200/204 (or expected success status)
+3.Verify via User API that room is deleted
+
+Expected Result:
+- Room is deleted successfully via Admin API.
+- User API no longer shows the deleted room (and GET by ID returns 404 if applicable).
+
+Postconditions:
+- Room is removed (environment cleaned up).
